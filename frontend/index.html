@@ -234,7 +234,7 @@
     }
   }
 
-  async function loadOrders() {
+async function loadOrders() {
     const res = await fetch(API + '/orders', {
       headers: { Authorization: 'Bearer ' + token }
     });
@@ -251,6 +251,19 @@
         <strong>Total:</strong> $${o.totalAmount}<br/>
         <strong>Items:</strong> ${o.sellerGroups?.reduce((sum, g) => sum + (g.items?.length || 0), 0) || 0} item(s)<br/>
         <strong>Placed:</strong> ${new Date(o.createdAt).toLocaleDateString()}
+        ${o.status === 'delivered' ? `
+        <br/><br/>
+        <strong>Leave a Review:</strong><br/>
+        <select id="rating-${o._id}" style="width:auto;margin:0.3rem 0;">
+          <option value="5">⭐⭐⭐⭐⭐ 5 stars</option>
+          <option value="4">⭐⭐⭐⭐ 4 stars</option>
+          <option value="3">⭐⭐⭐ 3 stars</option>
+          <option value="2">⭐⭐ 2 stars</option>
+          <option value="1">⭐ 1 star</option>
+        </select><br/>
+        <input type="text" id="comment-${o._id}" placeholder="Write your review..." style="margin:0.3rem 0 0.5rem;"/><br/>
+        <button class="secondary" onclick="submitReview('${o._id}', '${o.sellerGroups?.[0]?.items?.[0]?.productId}')">Submit Review</button>
+        ` : ''}
       </div>
     `).join('');
   }
@@ -298,6 +311,23 @@
       loadSellerProducts();
     } else {
       showMsg(data.message || 'Failed to create product', 'error');
+    }
+  }
+
+async function submitReview(orderId, productId) {
+    const rating = parseInt(document.getElementById('rating-' + orderId).value);
+    const comment = document.getElementById('comment-' + orderId).value;
+    if (!productId) { showMsg('No product found for this order', 'error'); return; }
+    const res = await fetch(API + '/reviews', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+      body: JSON.stringify({ orderId, productId, rating, comment })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      showMsg('Review submitted! It will appear after moderation.', 'success');
+    } else {
+      showMsg(data.error || 'Failed to submit review', 'error');
     }
   }
 

@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-
 const productSchema = new mongoose.Schema({
   name:        { type: String, required: true, trim: true },
   description: { type: String, default: '' },
@@ -10,10 +9,10 @@ const productSchema = new mongoose.Schema({
   storeId:     { type: mongoose.Schema.Types.ObjectId, required: true },
   isActive:    { type: Boolean, default: true },
   tags:        [{ type: String }],
+  stock:       { type: Number, default: 0 },
+  avgRating:   { type: Number, default: 0 },
+  reviewCount: { type: Number, default: 0 },
   createdAt:   { type: Date, default: Date.now },
 });
-
-// Enables text search on name, description and tags
 productSchema.index({ name: 'text', description: 'text', tags: 'text' });
-
 module.exports = mongoose.model('Product', productSchema);
