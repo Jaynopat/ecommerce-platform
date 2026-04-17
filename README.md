@@ -55,7 +55,7 @@ No service accesses another service's database directly.
 | Seller Service | 3009 | Store management, seller dashboards |
 | Analytics Service | 3010 | Revenue and order insights |
 | Search Service | 3011 | Full-text product search |
-| Messaging Service | 3012 | Real-time WebSocket chat (Socket.io) |
+| Messaging Service | 3012 | Real-time WebSocket buyer-seller chat (Socket.io). LLM-powered order query layer identified as future enhancement. |
 | Frontend | 8080 | HTML/JS buyer and seller UI |
 | RabbitMQ | 5672 | Asynchronous event bus |
 | RabbitMQ UI | 15672 | Management dashboard |
