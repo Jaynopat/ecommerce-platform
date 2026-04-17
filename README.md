@@ -260,6 +260,55 @@ ecommerce-platform/
 
 ---
 
+## ✅ Implemented Fixes & Enhancements
+
+### Event Handlers (Gap 1)
+All missing event subscriptions have been wired up:
+- `payment.captured` → Order Service advances order to `paid`
+- `shipment.created` → Order Service advances order to `shipped`  
+- `shipment.delivered` → Order Service advances order to `delivered`
+- `review.approved` → Catalog Service recalculates `product.avgRating`
+- `inventory.stock_low` → Notification Service alerts seller
+
+### Product avgRating (Gap 2)
+- `avgRating` and `reviewCount` fields added to Product model
+- Catalog Service subscribes to `review.approved` event and recalculates rating automatically
+
+### Inventory lowStockThreshold (Gap 3)
+- `lowStockThreshold` field already present in Inventory model
+- Inventory Service publishes `inventory.stock_low` event when available stock falls below threshold
+
+### Review Moderation Queue (Gap 4)
+- Reviews now start with `status: pending` instead of being auto-approved
+- Admin endpoints added:
+  - `GET /api/reviews/pending` — view all pending reviews
+  - `PATCH /api/reviews/:id/approve` — approve a review (triggers `review.approved` event)
+  - `PATCH /api/reviews/:id/flag` — flag a review
+- `review.approved` event published on approval, triggering avgRating recalculation
+
+### Buyer Review UI (Gap 5)
+- Review form added to My Orders page in frontend
+- Buyers can submit star rating and comment on delivered orders
+- Reviews go through moderation queue before appearing publicly
+
+### API Gateway Fix
+- Downgraded `http-proxy-middleware` from v3 to v2.0.6 for compatibility
+- Removed all broken `pathRewrite` configurations
+- All service routes now proxy correctly
+
+---
+
+## 🏛️ Design Decisions
+
+### Service Discovery
+Rather than implementing a dedicated service registry such as Consul or Eureka, this platform leverages Docker Compose's built-in DNS resolution as a lightweight service discovery mechanism. Each service is reachable by its container name (e.g. `http://catalog-service:3002`) without any additional infrastructure. This is an intentional decision appropriate for the scope of this project — in a production Kubernetes deployment, a full service mesh or registry would replace this.
+
+### Payment Integration
+The payment service implements a complete escrow architecture (hold funds on order, release per seller on delivery) with the provider layer abstracted behind a controller interface. This follows the Protected Variations GRASP principle — swapping the mock provider for Stripe or PayPal requires only changing the payment adapter, with zero impact on any other service.
+
+### Event-Driven Over REST
+Inter-service communication uses RabbitMQ events rather than synchronous REST calls. This keeps services fully decoupled — the Order Service publishes `order.placed` without knowing which services consume it. This decision directly implements the Low Coupling GRASP principle and makes the system resilient to individual service failures.
+
 ## 👩‍💻 Technology Stack
 
 | Technology | Purpose |
